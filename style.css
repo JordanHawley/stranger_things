@@ -1,0 +1,65 @@
+* {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.navbar-brand {
+  font-size: 35px;
+  text-decoration: underline;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100%;
+  width: 100%;
+}
+
+#aside {
+  height: 100vh;
+  border: 3px solid forestgreen;
+  display: flex;
+  justify-content: center;
+  grid-column: 1;
+}
+
+#aside, .list-group {
+    margin: 15px;
+}
+
+.list-group-item {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid black;
+}
+
+#userSubmitButton, #registerUserSubmitButton {
+  margin-top: 15px;
+}
+
+.usernameLabel {
+ margin-top: 5px;
+}
+
+.passwordLabel {
+ margin-top: 13px;
+}
+
+.registerUserTitle, .loginUserTitle {
+  display: flex;
+  justify-content: center;
+}
+
+#newPost, #myPosts {
+  display: none;
+}
+
+#navbarDropdown, #loggedInUser {
+  font-size: 19px;
+}
+
+#newPostButton {
+  margin-top: 30px;
+}
