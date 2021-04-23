@@ -9,9 +9,9 @@ async function fetchPosts() {
 
   try {
     const response = await fetch(url);
-    const data = await response.json();
+    const { data } = await response.json();
     // console.log(data)
-    return data.data.posts;
+    return data.posts;
   } catch (error) {
     console.error(error);
   }
@@ -20,13 +20,14 @@ async function fetchPosts() {
 //FETCHES AND RENDERS THE POSTS TO THE SCREEN
 const fetchAndRender = async () => {
   const posts = await fetchPosts();
-  console.log(posts)
+  // console.log(posts)
   renderPostsLinks(posts);
 };
 
+//FETCHES AND RENDERS MY POSTS
 const fetchAndRenderMyPosts = async () => {
   const me = await fetchMe()
-  console.log(me)
+  // console.log(me)
   renderMyPostsLinks(me.posts)
 }
 
@@ -95,12 +96,21 @@ function renderPostsLinks(posts) {
   // console.log(posts); //Posts that have been saved to the database
 }
 
+//GOES THROUGH ALL OF MY POSTS AND RENDERS THEM TO THE MYPOST MODAL
 function renderMyPostsLinks(posts) {
   posts.forEach(function (post) {
-    const postElement = createPostHTML(post)
+    const postElement = createMyPostHTML(post)
     $('.modal-body').append(postElement)
   })
 }
+
+// function renderMyMessages(posts) {
+//   posts.forEach(function (message) {
+
+//   })
+// }
+
+
 
 //FUNCTION THAT OPENS A MODAL TO USERS OWNED POSTS
 $("#navbarSupportedContent").on("click", "#myPosts", function () {
@@ -111,10 +121,55 @@ $("#navbarSupportedContent").on("click", "#myPosts", function () {
   );
   $(".modal-body").html(
     fetchAndRenderMyPosts()
-    );
+  );
   $(".modal-footer").hide("#primaryButton");
 });
 
+//WHEN MYPOST IS CLICKED ON IT WILL DISPLAY A LIST OF MESSAGES FOR THAT POST
+$('.modal-body').on('click', '.list-group-item', function() {
+  const post = ($(this).data('myPost'))
+  console.log(post)
+  $('#postModal').modal('show')
+  $(".modal-header").html(
+    `${post.messages[0] ? `<h3 class="MyPostsMessageTitle">Message for ${post.title}</h3>` : `<h2>There are no Messages</h2>`}`
+  );
+  $(".modal-body").html(
+    `${post.messages[0] ? `<h4>${post.messages[0].fromUser.username}</h4>-<h5>"${post.messages[0].content}"</h5><hr>`: ""}`
+  );
+  $(".modal-footer").show()
+  $(".modal-footer").html(`<button id="backButton" type="button" 
+        class="btn btn-secondary" data-bs-dismiss="modal">
+          Back to Messages
+        </button>
+
+<button id="primaryButton" type="button" class="btn btn-primary">
+  Message
+</button>`);
+
+// If post.messages.length > 0 {
+//   let parentContainer = $(`<div>`)
+//  for (let i = 0; i < post.messages.length; i++) {
+//   let currentMesage = post.messages[i]
+// Create a child element that utilizes the data in that message to render whatever you want
+// Then append that element you just created to the parentContainer element 
+//  } 
+// }
+// Append the parentContainer element to whatever modal you want to append it to
+})
+
+
+$('modal-footer').on('click', '#backButton', function() {
+  $("#postModal").modal("show");
+  $(".modal-header").html(
+    '<h3 class="listMyPostsTitle">List of My Posts</h3>'
+  );
+  $(".modal-body").html(
+    fetchAndRenderMyPosts()
+  );
+  $(".modal-footer").hide("#primaryButton");
+})
+
+//FUNCTION TO FETCH THE DATA FROM ME
 const fetchMe = async () => {
   const url = `${BASE_URL}/users/me`
   const token = JSON.parse(localStorage.getItem("token"))
@@ -127,8 +182,8 @@ const fetchMe = async () => {
         Authorization: `Bearer ${token}`
       }
     })
-    const data = await response.json()
-    return data.data
+    const { data } = await response.json()
+    return data
   } catch (error) {
     console.error(error)
   }
@@ -136,12 +191,21 @@ const fetchMe = async () => {
 
 //FUNCTION TO CREATE THE POST HTML BUTTON
 const createPostHTML = (post) => {
-  return $(`<button type="button" id="postToggle" class="btn btn-primary list-group-item list-group-item-action">
+  return $(`<h4 id="postToggle" class="btn btn-primary list-group-item list-group-item-action">
    Author: ${post.author.username} / ${post.title} / Will Deliver: ${
     post.willDeliver === true ? "YES" : "NO"
   } 
-  </button>`).data("post", post);
+  </h4>`).data("post", post);
 };
+
+//CREATE MY POSTS HTML BUTTON
+const createMyPostHTML = (post) => {
+  return $(`<h4 id="postToggle" class="btn btn-primary list-group-item list-group-item-action">
+   Post Title: ${post.title} / Will Deliver: ${
+    post.willDeliver === true ? "YES" : "NO"
+  } / Price: ${post.price}
+  </h4>`).data("myPost", post);
+}
 
 //FUCNTION TO CREATE THE NEW POST MODAL AND UPDATE THE MODAL IN THE HTML
 const createNewPostHTML = () => {
