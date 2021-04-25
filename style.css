@@ -52,7 +52,7 @@
   justify-content: center;
 }
 
-#newPost, #myPosts {
+#newPost, #myPosts, #newMessage, #logOut {
   display: none;
 }
 
