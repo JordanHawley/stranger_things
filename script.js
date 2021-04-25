@@ -51,8 +51,9 @@ async function fetchPosts() {
 //FETCHES AND RENDERS THE POSTS TO THE SCREEN
 const fetchAndRender = async () => {
   const posts = await fetchPosts();
+  const me = await fetchMe()
   // console.log(posts)
-  renderPostsLinks(posts);
+  renderPostsLinks(posts, me);
 };
 
 //FETCHES AND RENDERS MY POSTS
@@ -66,28 +67,43 @@ const fetchAndRenderMyPosts = async () => {
 $("#userposts").on("click", ".list-group-item", async function () {
   $("#postModal").modal("show");
   const me = await fetchMe();
-  console.log(me);
-  const post = $(this).data("post");
-  console.log(post);
+  // console.log(me);
+  const postData = $(this).data("post");
+  localStorage.setItem("currentPost", JSON.stringify(postData))
+  // console.log(postData);
   $(".modal-header").html(
-    `<h3>Poster: ${post.author.username}<br><hr><b>${post.title}<b></h3>`
+    `<h3>Poster: ${postData.author.username}<br><hr><b>${postData.title}<b></h3>`
   );
   $(".modal-body").html(
-    `<h5>${post.description}</h5>
+    `<h5>${postData.description}</h5>
     <br>
-    <h5>Location: ${post.location}</h5>
+    <h5>Location: ${postData.location}</h5>
     <br>
-    <h5>Delivery: ${post.willDeliver === true ? "YES" : "NO"}</h5>
+    <h5>Delivery: ${postData.willDeliver === true ? "YES" : "NO"}</h5>
     <br>
-    <h6><em><b>Price: ${post.price}<b></em></h6>`
+    <h6><em><b>Price: ${postData.price}<b></em></h6>`
   );
   (function checkForLogin() {
     const token = JSON.parse(localStorage.getItem("token"));
-    if (token && post.author._id !== me._id) {
+    if (token && postData.author._id !== me._id) {
       $(".modal-footer").show();
+      $('#primaryButton').show()
+      $('#deleteButton').hide()
       $("#primaryButton").text("Send Message");
-    } else {
-      $(".modal-footer").hide();
+    } else if (token && postData.author._id === me._id) {
+      $(".modal-footer").html(`<button
+      id="closeButton"
+      type="button"
+      class="btn btn-secondary"
+      data-bs-dismiss="modal"
+    >
+      Close
+    </button>
+
+    <button id="primaryButton" type="button" class="btn btn-primary">
+      Save changes
+    </button><button id="deleteButton" class="btn btn-primary">DELETE POST</button>`)
+    $("#primaryButton").hide();
     }
   })();
 });
@@ -126,9 +142,9 @@ $("#navbarSupportedContent").on("click", "#newPost", function () {
 });
 
 //FUNCTION THAT LOOPS THROUGH ALL POSTS/RENDERS THEM TO THE SCREEN WHEN INVOKED
-function renderPostsLinks(posts) {
+function renderPostsLinks(posts ,me) {
   posts.forEach(function (post) {
-    const postElement = createPostHTML(post);
+    const postElement = createPostHTML(post, me)
     $("#userposts").append(postElement);
   });
   // console.log(posts); //Posts that have been saved to the database
@@ -154,7 +170,7 @@ $("#navbarSupportedContent").on("click", "#myPosts", function () {
 //WHEN MYPOST IS CLICKED ON IT WILL DISPLAY A LIST OF MESSAGES FOR THAT POST
 $(".modal-body").on("click", ".list-group-item", function () {
   const post = $(this).data("myPost");
-  console.log(post);
+  // console.log(post);
   $("#postModal").modal("show");
   $(".modal-header").html(
     `${
@@ -181,7 +197,7 @@ $(".modal-body").on("click", ".list-group-item", function () {
       // console.log(currentMessage)
       let childContainer = $(`<div class="childMessages">`);
       childContainer.append(
-        `<h4>${currentMessage.fromUser.username} : "${currentMessage.content}"`
+        `<h4>${currentMessage.fromUser.username} : "${currentMessage.content}"</h4>`
       );
       parentContainer.append(childContainer);
     }
@@ -218,11 +234,11 @@ const fetchMe = async () => {
 };
 
 //FUNCTION TO CREATE THE POST HTML BUTTON
-const createPostHTML = (post) => {
+const createPostHTML = (post, me) => {
   return $(`<h4 id="postToggle" class="btn btn-primary list-group-item list-group-item-action">
    Author: ${post.author.username} / ${post.title} / Will Deliver: ${
     post.willDeliver === true ? "YES" : "NO"
-  } 
+  }
   </h4>`).data("post", post);
 };
 
@@ -352,7 +368,7 @@ const registerUser = async (usernameValue, passwordValue) => {
     const {
       data: { token },
     } = await response.json();
-    console.log(token);
+    // console.log(token);
     localStorage.setItem("token", JSON.stringify(token));
     $("#loggedInUser").html(usernameValue);
     hideRegistrationModal();
@@ -435,8 +451,41 @@ const hideLoginModal = () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////DELETE A POST THAT BELONGS TO YOU//////////
+const deletePost = async (postId) => {
+  const token = JSON.parse(localStorage.getItem("token"));
+  try {
+    const response = await fetch(`${BASE_URL}/posts/${postId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+$(".modal-footer").on("click", "#deleteButton", async function (event) {
+  event.preventDefault();
+  // console.log("I am now deleting the post!");
+
+  const post = JSON.parse(localStorage.getItem("currentPost"))
+  console.log(post)
+
+  const id = post._id
+
+  console.log(id);
+
+  await deletePost(id);
+  $('#postModal').modal('hide')
+  $('#userposts').empty()
+  fetchAndRender();
+});
 
 /////////////CREATE AND SEND A MESSAGE/////////////
+
 
 //////////////////////////FUNCTIONS TO CREATE NEW POST AND SUBMIT//////////////////////////
 const createNewPost = async (requestBody) => {
@@ -486,6 +535,7 @@ $(".modal-body").on("submit", ".newPost form", async (event) => {
   };
   try {
     await createNewPost(requestBody);
+    $('#userposts').empty()
     fetchAndRender();
   } catch (error) {
     console.log(error);
