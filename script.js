@@ -4,20 +4,35 @@ const BASE_URL =
 let currentRunningNumber = 1;
 
 const keepUserLoggedIn = async () => {
-  const me = await fetchMe()
+  const me = await fetchMe();
   const token = localStorage.getItem("token");
   if (token) {
     $("#newMessage").css("display", "block");
     $("#newPost").css("display", "block");
     $("#myPosts").css("display", "block");
-    $('#logOut').css('display', 'block')
-    $('#loggedInUser').html(me.username)
+    $("#logOut").css("display", "block");
+    $("#loggedInUser").html(me.username);
     $("#signIn").hide();
     $("#registerUser").hide();
   } else {
     console.log("nothing to hide");
   }
 };
+
+const logOutUser = () => {
+  localStorage.removeItem("token");
+  $("#newMessage").css("display", "none");
+  $("#newPost").css("display", "none");
+  $("#myPosts").css("display", "none");
+  $("#logOut").css("display", "none");
+  $("#signIn").show();
+  $("#registerUser").show();
+  $("#loggedInUser").empty();
+};
+
+$("#logOut").on("click", function () {
+  logOutUser();
+});
 
 //FETCHES THE POSTS
 async function fetchPosts() {
@@ -360,7 +375,7 @@ const hideRegistrationModal = () => {
     $("#newMessage").css("display", "block");
     $("#newPost").css("display", "block");
     $("#myPosts").css("display", "block");
-    $('#logOut').css('display', 'block')
+    $("#logOut").css("display", "block");
     $("#signIn").hide();
     $("#registerUser").hide();
   } else {
@@ -410,7 +425,7 @@ const hideLoginModal = () => {
     $("#newMessage").css("display", "block");
     $("#newPost").css("display", "block");
     $("#myPosts").css("display", "block");
-    $('#logOut').css('display', 'block')
+    $("#logOut").css("display", "block");
     $("#signIn").hide();
     $("#registerUser").hide();
   } else {
@@ -421,14 +436,7 @@ const hideLoginModal = () => {
 
 ////////DELETE A POST THAT BELONGS TO YOU//////////
 
-
-
-
-
-
 /////////////CREATE AND SEND A MESSAGE/////////////
-
-
 
 //////////////////////////FUNCTIONS TO CREATE NEW POST AND SUBMIT//////////////////////////
 const createNewPost = async (requestBody) => {
@@ -490,7 +498,7 @@ const hideNewPostModal = () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 fetchAndRender();
-keepUserLoggedIn()
+keepUserLoggedIn();
 
 // <p>Will Deliver:</p>
 
