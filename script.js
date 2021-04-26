@@ -28,6 +28,7 @@ const logOutUser = () => {
   $("#signIn").show();
   $("#registerUser").show();
   $("#loggedInUser").empty();
+  $('.modal-footer').hide()
 };
 
 $("#logOut").on("click", function () {
@@ -52,7 +53,7 @@ async function fetchPosts() {
 const fetchAndRender = async () => {
   const posts = await fetchPosts();
   const me = await fetchMe()
-  // console.log(posts)
+  $('.modal-footer').hide()
   renderPostsLinks(posts, me);
 };
 
@@ -65,6 +66,7 @@ const fetchAndRenderMyPosts = async () => {
 
 //MODAL THAT DISPLAYS FURTHER INFORMATION ABOUT THE POST
 $("#userposts").on("click", ".list-group-item", async function () {
+  // $('#sendMessage').hide()
   $("#postModal").modal("show");
   const me = await fetchMe();
   // console.log(me);
@@ -102,7 +104,14 @@ $("#userposts").on("click", ".list-group-item", async function () {
 
     <button id="primaryButton" type="button" class="btn btn-primary">
       Save changes
-    </button><button id="deleteButton" class="btn btn-primary">DELETE POST</button>`)
+    </button>
+    <button id="deleteButton" class="btn btn-primary">
+      DELETE POST
+      </button>
+      <button id="sendMessage" type="button" class="btn btn-primary">
+          Send
+        </button>`)
+    // $('#sendMessage').hide()
     $("#primaryButton").hide();
     }
   })();
@@ -181,14 +190,27 @@ $(".modal-body").on("click", ".list-group-item", function () {
   );
   // $('.modal-body').html(`${post.messages[0].fromUser.username}<hr>${post.messages[0].content}`)
   $(".modal-footer").show();
-  $(".modal-footer").html(`<button id="backButton" type="button" 
-        class="btn btn-secondary" data-bs-dismiss="modal">
-          Back to Messages
-        </button>
+  $(".modal-footer").html(`<button
+  id="closeButton"
+  type="button"
+  class="btn btn-secondary"
+  data-bs-dismiss="modal"
+>
+  Close
+</button>
 
 <button id="primaryButton" type="button" class="btn btn-primary">
-  Message
-</button>`);
+  Save changes
+</button>
+<button id="deleteButton" class="btn btn-primary">
+  DELETE POST
+  </button>
+  <button id="sendMessage" type="button" class="btn btn-primary">
+      Send
+    </button>`);
+  $('#primaryButton').hide()
+  $('#deleteButton').hide()
+  // $('#sendMessage').hide()
 
   if (post.messages.length > 0) {
     let parentContainer = $(`<div class="parentMessages">`);
@@ -461,7 +483,7 @@ const deletePost = async (postId) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    const result = await response.json();
+    await response.json();
   } catch (e) {
     console.error(e);
   }
@@ -485,6 +507,74 @@ $(".modal-footer").on("click", "#deleteButton", async function (event) {
 });
 
 /////////////CREATE AND SEND A MESSAGE/////////////
+const sendMessage = async (requestBody, postId) => {
+  const url = `${BASE_URL}/posts/${postId}/messages`
+  const token = JSON.parse(localStorage.getItem("token")) 
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content=Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody) 
+    })
+    const result = response.json()
+    return result
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const createMessageModal = () => {
+  $(".modal-header").html(
+    '<h3 class="registerUserTitle">Send Your Message</h3>'
+  );
+  $(".modal-body").html(`
+  <form id="submitMessageForm">
+  <div class="form-group">
+  <label for="messageBody" class="mb-2">Message Body</label>
+  <textarea
+    class="form-control"
+    name="messageBody"
+    id="messageBody"
+    cols="30"
+    rows="10"
+    placeholder="Message Body"
+    required
+  >
+  </textarea>
+</div>
+<button id="submitMessage" type="submit" class="btn btn-primary mt-3">Submit</button>
+</form>`);
+  $('#primaryButton').hide()
+  // $("#sendMessage").show();
+}
+
+$('.modal-footer').on('click', '#primaryButton', function() {
+  createMessageModal()
+})
+
+$('modal-body').on('submit', '#submitMessage', async function(event) {
+  console.log('test')
+  event.preventDefault();
+  const postId = JSON.parse(localStorage.getItem('currentPost'))
+  const postId_id = postId_id
+  const messageBody = $("#messageBody").val();
+
+  const requestBody = {
+    message: {
+      content: messageBody
+    },
+  };
+
+  try {
+    await sendMessage(requestBody, postId_id);
+  } catch (error) {
+    console.log(error);
+  }
+})
 
 
 //////////////////////////FUNCTIONS TO CREATE NEW POST AND SUBMIT//////////////////////////
